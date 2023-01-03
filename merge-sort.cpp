@@ -1,53 +1,82 @@
 #include<iostream>
 #include<vector>
 #include<cmath>
+#include<cstdlib>
 
 using namespace std;
 
-// ---------- MERGE SORT ----------
-
-void Merge(vector<int> A, int first, int last, int mid)
+void print(vector<int> v)
 {
-  vector<int> B; // vettore di appoggio
-  int i,j,k,h;   // indici
-  i = first;
-  j = mid + 1; // primo elemento del secondo vettore
-
-  while(i <= mid && j <= last) // finche' non ho esaurito nessuno dei due vettori
+  for(int i(0); i < v.size(); i++)
     {
-      if(A[i] <= A[j])
+      cout << "elem : " << v.at(i) <<endl;
+    }
+}
+
+// -------------- RIMPLEMENTAZIONE MERGE SORT -----------------
+
+// COMPLESSITA' MERGE SORT = THETA(nlog(n))
+
+void merge(vector<int>& v, int p, int middle, int r)
+{
+  vector<int> sup;
+  int i(0);
+  int j(middle + 1);
+
+  while(i <= middle && j <= r) // complessità pari a O(n)
+    {
+      if(v.at(i) <= v.at(j))
 	{
-	  B.push_back(A[i]);
+	  sup.push_back(v.at(i));
 	  i++;
 	}
       else
 	{
-	  B.push_back(A[j]);
+	  sup.push_back(v.at(j));
 	  j++;
 	}
     }
 
-  j = last;
-
-  for(int h = mid; h > i; h--) // se mi sono rimasti degli elementi nel sottoarray di sx allora li sposto alla fine
+  j = r;
+  
+  for(int k = middle; k >= i; k--)
     {
-      A[j] = A[h];
+      v.at(j) = v.at(k);
       j--;
     }
 
-  for(j = first; j < B.size(); j++)
+  
+  for(int k(0); k < sup.size(); k++)
+    v.at(k) = sup.at(k);
+  
+    
+}
+       
+
+void mergesort(vector<int>& v, int p, int r)
+{
+  // vedere se il limite sinistro non supera quello destro
+  if(p < r)
     {
-      A[j] = B[j];
+      int middle = ( p + r ) / 2;
+      mergesort(v, p, middle);
+      mergesort(v, middle + 1, r);
+      merge(v, p, middle, r);
     }
+
 }
 
-void MergeSort(vector<int> A, int first, int last)
+int main()
 {
-  if(first < last)
-    {
-      int mid = floor((first + last) / 2);
-      MergeSort(A, first, mid);
-      MergeSort(A, mid + 1, last);
-      Merge(A, first, last, mid);
-    }
+  vector<int> v = {4, 2, 3, 6, 1, 8, 4, 9, 10};
+
+  print(v);
+
+  mergesort(v, 0, v.size() - 1);
+
+  cout << "merge"<<endl;
+
+  print(v);
+
+  return 0;
 }

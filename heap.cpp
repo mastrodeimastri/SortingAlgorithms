@@ -67,6 +67,12 @@ void heap_increase_key(vector<int>& A, int i, int key)
     }
 }
 
+/*
+  la complessità della funzione di inserimento all'intero di un heap sarà pari a O(log(n)) in quanto io faccio
+  al massimo log n ricorsioni.
+  Questo perché al massimo faccio risalire il valore fino alla radine.
+ */
+
 void maxheap_insert(vector<int>&A, int key)
 {
   A.push_back(INT_MIN);
