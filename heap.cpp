@@ -1,111 +1,139 @@
+#include <algorithm>
 #include <climits>
+#include <cwctype>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
 using namespace std;
 
+struct Heap
+{
+  vector<int> v;
+  int heap_size;
+
+  Heap()
+  {
+    heap_size = 0;
+  }
+};
+
 // funzione di supporto per scambiare valori
 void swap(vector<int>& A, int i, int j)
 {
-  int temp = A[i];
-  A[i] = A[j];
-  A[j] = temp;
+  int temp = A.at(i);
+  A.at(i) = A.at(j);
+  A.at(j) = temp;
 }
 
 // funzione che mi restituisce l'indice del padre
-int parent(int i) { return floor(i/2); }
+int parent(int i) { return floor( ( i - 1 ) / 2 ); }
 
 // funzione che mi restituisce l'indice del figlio sx
-int left(int i) { return i*2; }
+int left(int i) { return i*2 + 1; }
 
 // funzione che mi restituisce l'indice del figlio dx
-int right(int i) { return i*2 + 1; }
+int right(int i) { return i*2 + 2; }
 
 
-/*
-  funzione di supporto che mi consente di far rispettare le
-  carateristiche di un max_heap al mio vettore
-*/
-void max_heapify(vector<int>& A, int heap_size, int i)
+// ---------------- REFACTOR ------------------
+
+void maxHeapify(Heap& H, int i)
 {
+
+  int left_child = left(i);
+  int right_child = right(i);
   int max(i);
-  int l(left(i));
-  int r(right(i));
 
-  if(l< heap_size && A.at(l) > A.at(i)) max = l;
+  // trovo il maggiore tra il padre e i due figli
+  if(left_child <= H.heap_size && H.v.at(max) < H.v.at(left_child)) max = left_child;
+  if(right_child <= H.heap_size && H.v.at(max) < H.v.at(right_child)) max = right_child;
 
-  if(r < heap_size && A.at(r) > A.at(max)) max = r;
-
-  if(i != max)
+  // se il maggiore era un figlio allora scambio il madre con il max chiamo la maxHeapify sul max
+  if(max != i)
     {
-      swap(A, i, max);
-      max_heapify(A, heap_size ,max);
+          swap(H.v, i, max);
+	  maxHeapify(H, max);	  
     }
 }
 
 /*
-  funzione che mi consente di costruire un max_heap a partire da un qualsiasi vettore di interi
-*/
+  COMPLESSITA' buildMaxHeap: O(nlog(n))
 
-void build_maxheap(vector<int>& A)
-{
-  for(int i(A.size()/2); i >= 0; i--) max_heapify(A, A.size() ,i);
-}
+  COMPLESSITA' STRETTA: O(n)
 
-void heap_increase_key(vector<int>& A, int i, int key)
-{
-  if(key < A.at(i))
-    cout << "la chiave inserita e' piu' piccola di quella presente" << endl;
+  SPIEGAZIONE:
 
-  A.at(i) = key;
+  la complessità di questa funzione è LIMITATA SUPERIORMENTE da nlog(n) in quanto io vado a chiamare la maxHeapify, il quale costo è log(n), n/2 volte.
 
-  while (i > 0 && A.at(parent(i)) < A.at(i))
-    {
-      swap(A, i, parent(i));
-      i = parent(i);
-    }
-}
+  SPIEGAZIONE PRECISA:
 
-/*
-  la complessità della funzione di inserimento all'intero di un heap sarà pari a O(log(n)) in quanto io faccio
-  al massimo log n ricorsioni.
-  Questo perché al massimo faccio risalire il valore fino alla radine.
+  Osserviamo che la funzione maxHeapify per un nodo di altezza h è pari a O(h) ed il numero di nodi di altezza h è ceil(n/2^(h + 1)).
+  Quindi la maxHeapify viene chiamata ceil(n/2^(h + 1)) per ogni altezza h.
+
+  Quindi il costo della buildMaxHeap risulterà essere:
+
+  sommatoria con h che va da 0 a log(n) di ceil(n/2^(h + 1))*O(h).
+
+  questa sommatoria, una volta risolta, porterà ad avere un O(2n) per cui la complessità asintotica della funzioni si può dire che sia O(n)
+
+ 
  */
 
-void maxheap_insert(vector<int>&A, int key)
+Heap buildMaxHeap(vector<int> v)
 {
-  A.push_back(INT_MIN);
-  heap_increase_key(A, A.size() - 1, key);
-}
+  // dichiaro ed inizializzo l'heap
+  Heap H;
+  H.v = v;
+  H.heap_size = H.v.size() - 1;
 
-/*
-  Questa funzione mi permette di andare a cancellare l'elemento in posizione i del mio heap
+  // chiamo la maxHeapify su ogni non a partire dal livello log(n) - 1, così facendo vado a costruire vari "sotto maxHeap"
+  //che poi andranno a formare il maxHeap finale
+  for(int i(floor(H.heap_size / 2)); i >= 0; i--)  maxHeapify(H, i);
   
-  Pre condizione: il nodo all'indice i deve fare parte di un heap
-  Post condizione: l'elemento in posizione i e' stato cancellato
- */
+  return H;
+}
 
-void heap_delete(vector<int>& A, int i)
+void heapIncrease(Heap& h, int i, int elem)
 {
-  int val;
-  if(A.size() == 1)
-    A.pop_back();
+  if(elem < h.v.at(i))
+    cout << "valore minore rispetto a quello gia' presente" << endl;
   else
     {
-      val = A.at(i);
-      A.at(i) = A.at(A.size() - 1);
-      A.pop_back();
-    }
-
-  if(val > A.at(i))
-    max_heapify(A, A.size(), i);
-  else
-    {
-      while(i > 1 && A.at(i) > A.at(parent(i)))
+      h.v.at(i) = elem;
+      while(i > 0 && elem > h.v.at(parent(i)))
 	{
-	  swap(A, i, parent(i));
+	  swap(h.v, i,parent(i));
 	  i = parent(i);
 	}
     }
+}
+
+void heapInsert(Heap& h, int elem)
+{
+  h.v.push_back(INT_MIN);
+  heapIncrease(h, ++h.heap_size, elem);
+
+}
+
+void print(vector<int> v)
+{
+  for(int i(0); i < v.size(); i++)
+    {
+      cout << v.at(i) << endl;
+    }
+}
+
+int main()
+{
+  vector<int> v = {16,4,10,14,7,9,3,2,8,1};
+  
+  Heap h = buildMaxHeap(v);
+
+  print(h.v);
+
+  heapInsert(h, 55);
+
+  cout << "con inserimento:" << endl;
+  print(h.v);
 }
